@@ -94,13 +94,26 @@ void ll_rotation(avlTree* root) {
     new_height = biggest_height(node_height(unbalanced_node->left_child),node_height(unbalanced_node->right_child)) +1;
     unbalanced_node->height = new_height; //Atualiza a altura que está o nó inicialmente desbalanceado.
     new_height = biggest_height(node_height(auxiliar_node->left_child), unbalanced_node->height) + 1;
-    auxiliar_node->height = new_height; //Atualiza a altura do nó que assume a posição
+    auxiliar_node->height = new_height; //Atualiza a altura do nó que assume a posição do nó desbalanceado.
 
     unbalanced_node = auxiliar_node; // O filho que estava a esquerda do nó desbalanceado assume a posição desse nó
 }
 
-void rr_rotation(){
+void rr_rotation(avlTree* root){
+    Node* unbalanced_node = root;
+    Node* auxiliar_node;
 
+    auxiliar_node = unbalanced_node->right_child;
+    unbalanced_node->right_child = auxiliar_node->left_child;
+    auxiliar_node->left_child = unbalanced_node;
+
+    int new_height;
+    new_height = biggest_height(node_height(unbalanced_node->left_child),node_height(unbalanced_node->right_child)) + 1;
+    unbalanced_node->height = new_height;
+    new_height = biggest_height(node_height(unbalanced_node->right_child),unbalanced_node->height) + 1;
+    auxiliar_node->height = new_height;
+
+    unbalanced_node = auxiliar_node;
 }
 
 int total_number(avlTree* root) { // Retorna o total de elementos na árvore;
