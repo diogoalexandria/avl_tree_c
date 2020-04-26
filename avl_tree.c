@@ -3,7 +3,7 @@
 #include "avl_tree.h"
 
 typedef struct NODE {
-    int info;
+    int value;
     int height;
     struct NODE *left_child;
     struct NODE *right_child;    
@@ -83,7 +83,7 @@ int biggest_height(int left, int right) {
 }
 
 void ll_rotation(avlTree* root) {    
-    Node* unbalanced_node = root;
+    Node* unbalanced_node = *root;
     Node* auxiliar_node;
 
     auxiliar_node = unbalanced_node->left_child; // Pega o filho à esquerda do ancestral mais próximo desbalanceado (Fator de balanceamento = +2) ao nó que foi inserido a árvore.
@@ -100,7 +100,7 @@ void ll_rotation(avlTree* root) {
 }
 
 void rr_rotation(avlTree* root){
-    Node* unbalanced_node = root;
+    Node* unbalanced_node = *root;
     Node* auxiliar_node;
 
     auxiliar_node = unbalanced_node->right_child;
@@ -114,6 +114,16 @@ void rr_rotation(avlTree* root){
     auxiliar_node->height = new_height;
 
     unbalanced_node = auxiliar_node;
+}
+
+void lr_rotation(avlTree* root) {
+    rr_rotation(&(*root)->left_child);
+    ll_rotation(root);
+}
+
+void rl_rotation(avlTree* root) {
+    ll_rotation(&(*root)->right_child);
+    rr_rotation(root);
 }
 
 int total_number(avlTree* root) { // Retorna o total de elementos na árvore;
@@ -130,7 +140,7 @@ void pre_order(avlTree* root) {
     if (is_empty(root)) {        
         return;
     }    
-    printf("%d\n",(*root)->info);
+    printf("%d\n",(*root)->value);
     pre_order(&((*root)->left_child));    
     pre_order(&((*root)->right_child));
 }
@@ -140,7 +150,7 @@ void in_order(avlTree* root) {
         return;
     }
     in_order(&((*root)->left_child));
-    printf("%d\n",(*root)->info);
+    printf("%d\n",(*root)->value);
     in_order(&((*root)->right_child));
 }
 
@@ -150,13 +160,14 @@ void post_order(avlTree* root) {
     }
     post_order(&((*root)->left_child));
     post_order(&((*root)->right_child));
-    printf("%d\n",(*root)->info);
+    printf("%d\n",(*root)->value);
 }
 
 Node* create_node(int value) {
     Node *new = (Node*) malloc (sizeof(Node));
     if (new != NULL){
-        new->info = value;
+        new->value = value;
+        new->height = 0;
         new->right_child = NULL;
         new-> left_child = NULL;                
     } else {
@@ -166,25 +177,43 @@ Node* create_node(int value) {
 }
 
 int insert_value(avlTree* root, int value) {
-    if(!tree_exist(root)) {
-        printf("A árvore pode não ter sido inicializada.\n");
-        return 0;
-    }    
-    if (*root == NULL) {
-        *root = create_node(value);
-        printf("Novo nó inserido: %d\n", value);
-        return 1;        
-    }
-    int answer;
-    if ((*root)->info > value) {                
-        answer = insert_value(&((*root)->left_child), value);
-    } else if ((*root)->info < value) {              
-        answer = insert_value(&((*root)->right_child), value);
-    } else {
-        printf("Esse número já existe na árvore.");
-        return 0;
-    }    
-    return answer;    
+        if(!tree_exist(root)) {
+            printf("A árvore pode não ter sido inicializada.\n");
+            return 0;
+        }
+        Node* current = *root;
+        if(current == NULL) {
+            current = create_node(value);
+            return 1;
+        }
+        int answer;
+        if (value < current->value) {
+            if ((answer = insert_value(&(current->left_child),value)) == 1) {
+                if (balancing_factor(current) >= 2) {
+                    if (value < current->left_child->value) {
+                        ll_rotation(current);
+                    } else {
+                        lr_rotation(current);
+                    }                    
+                }
+            }
+        } else if (value > current->value) {
+            if ((answer = insert_value(&(current->left_child), value)) == 1) {
+                if (balancing_factor(current) >= 2) {
+                    if(value > current->right_child->value) {
+                        rr_rotation(current);
+                    } else {
+                        rl_rotation(current);
+                    }                    
+                }
+            }
+        } else {
+            printf("Esse número já existe na árvore.");
+            return 0;
+        }
+        int new_height = biggest_height(node_height(current->left_child),node_height(current->right_child)) + 1;
+        current->height = new_height;
+        return 1;
 }
 
 Node* remove_node(Node* this) {
@@ -205,7 +234,7 @@ Node* remove_node(Node* this) {
         return_node->left_child = this->left_child;
     }
     return_node->right_child = this->right_child;
-    printf("Nó deletado: %d\n", this->info);
+    printf("Nó deletado: %d\n", this->value);
     free(this);
     return return_node;    
 }
@@ -217,7 +246,7 @@ int delete_value(avlTree* root, int value) {
     Node *previous = NULL;
     Node *this_node = *root;
     while (this_node != NULL) {
-        if (value == this_node->info) {
+        if (value == this_node->value) {
             if (this_node == *root) // Testa se está removendo a raiz da árvore
                 *root = remove_node(this_node); // O retorno da função remove_node seŕa nova raiz da ŕavore
             else {
@@ -229,7 +258,7 @@ int delete_value(avlTree* root, int value) {
             return 1;
         }
         previous = this_node;
-        if ( value > this_node->info)
+        if ( value > this_node->value)
             this_node = this_node->right_child;
         else
             this_node = this_node->left_child;
@@ -243,9 +272,9 @@ int find_value(avlTree* root, int value) {
         return 0;
     }
     int answer;
-    if((*root)->info == value) {
+    if((*root)->value == value) {
         return 1;
-    } else if ((*root)->info > value) {
+    } else if ((*root)->value > value) {
         answer = find_value(&((*root)->left_child), value);
     } else {
         answer = find_value(&((*root)->right_child), value);
