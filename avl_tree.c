@@ -137,27 +137,27 @@ int total_number(avlTree* root) { // Retorna o total de elementos na árvore;
 }
 
 void pre_order(avlTree* root) {
-    if (is_empty(root)) {        
+    if (is_empty(root))      
         return;
-    }    
+        
     printf("%d\n",(*root)->value);
     pre_order(&((*root)->left_child));    
     pre_order(&((*root)->right_child));
 }
 
 void in_order(avlTree* root) {
-    if (is_empty(root)){        
+    if (is_empty(root))       
         return;
-    }
+    
     in_order(&((*root)->left_child));
     printf("%d\n",(*root)->value);
     in_order(&((*root)->right_child));
 }
 
 void post_order(avlTree* root) {
-    if (is_empty(root)) {        
+    if (is_empty(root))        
         return;
-    }
+    
     post_order(&((*root)->left_child));
     post_order(&((*root)->right_child));
     printf("%d\n",(*root)->value);
@@ -185,26 +185,23 @@ int insert_value(avlTree* root, int value) {
         if(current == NULL) {
             current = create_node(value);
             return 1;
-        }
-        int answer;
+        }        
         if (value < current->value) {
-            if ((answer = insert_value(&(current->left_child),value)) == 1) {
+            if (insert_value(&(current->left_child),value) == 1) {
                 if (balancing_factor(current) >= 2) {
-                    if (value < current->left_child->value) {
+                    if (value < current->left_child->value)
                         ll_rotation(current);
-                    } else {
-                        lr_rotation(current);
-                    }                    
+                    else
+                        lr_rotation(current);                                        
                 }
             }
         } else if (value > current->value) {
-            if ((answer = insert_value(&(current->left_child), value)) == 1) {
+            if (insert_value(&(current->left_child), value) == 1) {
                 if (balancing_factor(current) >= 2) {
-                    if(value > current->right_child->value) {
+                    if(value > current->right_child->value) 
                         rr_rotation(current);
-                    } else {
-                        rl_rotation(current);
-                    }                    
+                    else 
+                        rl_rotation(current);                                        
                 }
             }
         } else {
@@ -216,55 +213,60 @@ int insert_value(avlTree* root, int value) {
         return 1;
 }
 
-Node* remove_node(Node* this) {
-    Node *auxiliar_node, *return_node;
-    if(this->left_child == NULL) {
-        return_node = this->right_child;
-        free(this);
-        return return_node;
+Node* search_smallest(Node* current) {    
+    while (current->left_child != NULL) {
+        current = current->left_child;
     }
-    auxiliar_node = this;
-    return_node = this->left_child;
-    while (return_node->right_child != NULL) {
-        auxiliar_node = return_node;
-        return_node = return_node->right_child;
-    }
-    if(auxiliar_node != this) {
-        auxiliar_node->right_child = return_node->left_child;
-        return_node->left_child = this->left_child;
-    }
-    return_node->right_child = this->right_child;
-    printf("Nó deletado: %d\n", this->value);
-    free(this);
-    return return_node;    
-}
+    return current;
+} 
+
 
 int delete_value(avlTree* root, int value) {
     if (is_empty(root)) {
+        printf("A árvore está vazia.\n");
         return 0;
-    }
-    Node *previous = NULL;
-    Node *this_node = *root;
-    while (this_node != NULL) {
-        if (value == this_node->value) {
-            if (this_node == *root) // Testa se está removendo a raiz da árvore
-                *root = remove_node(this_node); // O retorno da função remove_node seŕa nova raiz da ŕavore
-            else {
-                if (previous->right_child == this_node) // Testa se o nó que será exluído está a direita do nó anterior
-                    previous->right_child = remove_node(this_node); 
-                else                              // Senão está a esquerda
-                    previous->left_child = remove_node(this_node);                    
+    }    
+    Node* current = *root;
+    if (value < current->value) {
+        if (delete_value(&(current->left_child), value) == 1) {
+            if (balancing_factor(current) >= 2) {
+                if(node_height(current->right_child->left_child) <= node_height(current->right_child->right_child))
+                    rr_rotation(current);
+                else
+                    rl_rotation(current);                                
             }
-            return 1;
         }
-        previous = this_node;
-        if ( value > this_node->value)
-            this_node = this_node->right_child;
-        else
-            this_node = this_node->left_child;
+    } else if (value > current->value){
+        if (delete_value(&(current->left_child), value) == 1) {
+            if (balancing_factor(current) >= 2 ) {
+                if (node_height(current->left_child->right_child <= current->left_child->left_child))
+                    ll_rotation(current);
+                else
+                    lr_rotation(current);
+            }
+        }
+    } else {
+        if (current->left_child == NULL || current->right_child == NULL) {
+            Node* return_node = current;
+            if(current->left_child != NULL)
+                current = current->left_child;
+            else
+                current = current->right_child;
+            free(return_node);
+        } else { // O nó a ser excluído tem dois filhos.
+            Node* auxiliar = search_smallest(current);
+            current->value = auxiliar->value;
+            delete_value(&(current->right_child), current->value);
+            if (balancing_factor(current) >= 2) {
+                if(node_height(current->left_child->right_child) <= node_height(current->left_child->left_child))
+                    ll_rotation;
+                else
+                    lr_rotation;
+            }
+        }
+        return 1;       
     }
-    printf("Elemento não encontrado para exclusão.\n");
-    return 0;    
+    return 1;
 }
 
 int find_value(avlTree* root, int value) {
